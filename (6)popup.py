@@ -17,17 +17,6 @@ from sympy.parsing.sympy_parser import (
 )
 
 
-# ============================================================
-# SETTINGS
-# ============================================================
-# เลือกฟอนต์ที่รองรับภาษาไทยสำหรับ Matplotlib
-# เพื่อป้องกัน warning:
-#   Glyph xxxx missing from font(s) DejaVu Sans
-#
-# บน Windows จะพยายามใช้ Tahoma ก่อน
-# ถ้าไม่พบจึงลอง Leelawadee UI / Nirmala UI ตามลำดับ
-# ส่วนนี้มีผลเฉพาะการแสดงผลตัวอักษร ไม่เกี่ยวกับสูตรคำนวณ
-# ============================================================
 def setup_thai_matplotlib_font():
     preferred_font_files = [
         r"C:\Windows\Fonts\tahoma.ttf",
@@ -39,7 +28,6 @@ def setup_thai_matplotlib_font():
 
     selected_font_name = None
 
-    # ลองโหลดจากไฟล์ฟอนต์ Windows โดยตรงก่อน
     for font_path in preferred_font_files:
         if os.path.exists(font_path):
             try:
@@ -58,7 +46,6 @@ def setup_thai_matplotlib_font():
             except Exception:
                 pass
 
-    # ถ้าไม่พบจาก path ให้ลองจากรายชื่อฟอนต์ที่ Matplotlib มองเห็น
     if selected_font_name is None:
         preferred_names = [
             "Tahoma",
@@ -477,18 +464,6 @@ def run_calculations(
     # แล้วปรับ h หลังจาก "ทุก step" ด้วยสูตรที่กำหนด:
     #
     #       h_new = 0.84*h*((TOL*h)/E)^(1/4)
-    #
-    # ไม่มีเงื่อนไข:
-    #       E = 0
-    #       E <= TOL
-    #       E > TOL
-    #
-    # ไม่มีการ Reject step แล้วลด h ครึ่งหนึ่ง
-    # ไม่มี error_control = E/5
-    #
-    # หมายเหตุ:
-    # x + 0.5*h ที่อยู่ใน k6 เป็น stage location
-    # ของสูตร Fehlberg RKF4(5) ไม่ใช่การปรับ step size.
     # --------------------------------------------------------
     def rkf45_adaptive_full(
         x_start,
@@ -603,8 +578,6 @@ def run_calculations(
             #
             # h_new = 0.84*h*((TOL*h)/E)^(1/4)
             #
-            # E=0 ทำให้สูตรหารด้วยศูนย์
-            # จึงใช้ machine tiny เป็น numerical safeguard เท่านั้น
             # ------------------------------------------------
             E_safe = max(
                 E,
@@ -838,33 +811,6 @@ def fmt7(value):
 # 8. PLOT RESULTS
 # ============================================================
 def plot_results(df_fixed, df_rkf, exact_expr, input_expr, is_linear):
-    """
-    แสดงผลเป็น 3 Popup พร้อมกัน
-
-    Popup 1:
-        K Values
-        - RK4
-        - CoM4
-        - RKF4(5)
-
-    Popup 2:
-        Exact Comparison Tables เท่านั้น
-        - RK4 vs Exact
-        - CoM4 vs Exact
-        - RKF4(5) vs Exact
-
-    Popup 3:
-        Graph เท่านั้น
-        - Exact
-        - RK4
-        - CoM4
-        - RKF4(5)
-
-    หมายเหตุ:
-        แก้เฉพาะส่วนแสดงผล
-        ไม่แก้สูตร Exact / RK4 / CoM4 / RKF4(5)
-        ไม่แก้ Error / Runtime / Adaptive h
-    """
     input_latex = equation_to_latex(input_expr)
     exact_latex = equation_to_latex(exact_expr)
     ode_type = "Linear ODE" if is_linear else "Nonlinear ODE"
@@ -1314,10 +1260,6 @@ def plot_results(df_fixed, df_rkf, exact_expr, input_expr, is_linear):
 
     maximize_figure(fig_graph)
 
-    # --------------------------------------------------------
-    # เปิดทั้ง 3 Popup พร้อมกัน
-    # แต่ให้หน้า K Values อยู่ด้านหน้าก่อน
-    # --------------------------------------------------------
     plt.show(block=False)
 
     try:
@@ -1343,7 +1285,6 @@ def plot_results(df_fixed, df_rkf, exact_expr, input_expr, is_linear):
     except Exception:
         pass
 
-    # ทั้ง 3 หน้าต่างยังเปิดพร้อมกัน
     plt.show(block=True)
 
 
@@ -1429,7 +1370,7 @@ def on_submit():
         # ----------------------------------------------------
         # Exact Solution
         #
-        # ถ้าผู้ใช้กรอกเอง -> ใช้ค่าที่กรอก
+        # ถ้ากรอกเอง -> ใช้ค่าที่กรอก
         # ถ้าปล่อยว่าง -> ให้ SymPy หาอัตโนมัติ
         # ----------------------------------------------------
         exact_func = None
@@ -1551,7 +1492,6 @@ def reset_form():
 
 # ============================================================
 # 11. INPUT GUI
-# ปรับเฉพาะหน้า Input — ไม่แก้หน้าแสดงผล
 # ============================================================
 root = tk.Tk()
 
@@ -1802,10 +1742,6 @@ def fill_example(example_name):
 
 
 def load_example():
-    """
-    เปิดหน้าต่างเลือกโจทย์ตัวอย่างหลายแบบ
-    โดยใช้โทนสีและรูปแบบเดียวกับหน้าหลัก
-    """
     example_window = tk.Toplevel(root)
     example_window.title("เลือกโจทย์ตัวอย่าง")
     example_window.configure(bg=BG_COLOR)
@@ -2509,7 +2445,6 @@ for entry_widget in (
 ):
     entry_widget.bind("<Return>", submit_with_enter)
 
-# กด Enter ที่ระดับหน้าต่างก็ได้เช่นกัน
 root.bind("<Return>", submit_with_enter)
 
 # Esc = ล้างข้อมูล
